@@ -30,22 +30,37 @@ import static com.mojang.blaze3d.systems.RenderSystem.*;
 @Mixin(RenderSystem.class)
 public abstract class RenderSystemMixin {
 
-    @Shadow private static Matrix4f projectionMatrix;
-    @Shadow private static Matrix4f savedProjectionMatrix;
-    @Shadow @Final private static PoseStack modelViewStack;
-    @Shadow private static Matrix4f modelViewMatrix;
-    @Shadow private static Matrix4f textureMatrix;
-    @Shadow @Final private static int[] shaderTextures;
-    @Shadow @Final private static float[] shaderColor;
-    @Shadow @Final private static Vector3f[] shaderLightDirections;
+    @Shadow
+    private static Matrix4f projectionMatrix;
+    @Shadow
+    private static Matrix4f savedProjectionMatrix;
+    @Shadow
+    @Final
+    private static PoseStack modelViewStack;
+    @Shadow
+    private static Matrix4f modelViewMatrix;
+    @Shadow
+    private static Matrix4f textureMatrix;
+    @Shadow
+    @Final
+    private static int[] shaderTextures;
+    @Shadow
+    @Final
+    private static float[] shaderColor;
+    @Shadow
+    @Final
+    private static Vector3f[] shaderLightDirections;
 
     @Shadow
     public static void assertOnGameThreadOrInit() {
     }
 
-    @Shadow @Final private static float[] shaderFogColor;
+    @Shadow
+    @Final
+    private static float[] shaderFogColor;
 
-    @Shadow private static @Nullable Thread renderThread;
+    @Shadow
+    private static @Nullable Thread renderThread;
 
     /**
      * @author
@@ -55,7 +70,7 @@ public abstract class RenderSystemMixin {
         if (i >= 0 && i < shaderTextures.length) {
             TextureManager textureManager = Minecraft.getInstance().getTextureManager();
             AbstractTexture abstractTexture = textureManager.getTexture(location);
-            VTextureSelector.bindTexture(i, ((VAbstractTextureI)abstractTexture).getVulkanImage());
+            VTextureSelector.bindTexture(i, ((VAbstractTextureI) abstractTexture).getVulkanImage());
 
             //shaderTextures[i] = abstractTexture.getId();
         }
@@ -70,7 +85,7 @@ public abstract class RenderSystemMixin {
             GlTexture glTexture = GlTexture.getTexture(id);
             VulkanImage vulkanImage = glTexture != null ? glTexture.getVulkanImage() : null;
 
-            if(vulkanImage == null)
+            if (vulkanImage == null)
                 return;
 
             VTextureSelector.bindTexture(i, vulkanImage);
@@ -92,7 +107,8 @@ public abstract class RenderSystemMixin {
      * @author
      */
     @Overwrite(remap = false)
-    public static void setupDefaultState(int x, int y, int width, int height) { }
+    public static void setupDefaultState(int x, int y, int width, int height) {
+    }
 
     /**
      * @author
@@ -133,13 +149,15 @@ public abstract class RenderSystemMixin {
      * @author
      */
     @Overwrite(remap = false)
-    public static void glGenBuffers(Consumer<Integer> consumer) {}
+    public static void glGenBuffers(Consumer<Integer> consumer) {
+    }
 
     /**
      * @author
      */
     @Overwrite(remap = false)
-    public static void glGenVertexArrays(Consumer<Integer> consumer) {}
+    public static void glGenVertexArrays(Consumer<Integer> consumer) {
+    }
 
     /**
      * @author
