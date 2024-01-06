@@ -132,8 +132,10 @@ public class SwapChain extends Framebuffer {
 
             LongBuffer pSwapChain = stack.longs(VK_NULL_HANDLE);
 
-            if(vkCreateSwapchainKHR(device, createInfo, null, pSwapChain) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create swap chain");
+            int err = vkCreateSwapchainKHR(device, createInfo, null, pSwapChain);
+
+            if(err != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create swap chain: " + err);
             }
 
             if(swapChain != VK_NULL_HANDLE) {
@@ -357,8 +359,8 @@ public class SwapChain extends Framebuffer {
         int requestedMode = vsync ? VK_PRESENT_MODE_FIFO_KHR : defUncappedMode;
 
         //fifo mode is the only mode that has to be supported
-        if(requestedMode == VK_PRESENT_MODE_FIFO_KHR)
-            return VK_PRESENT_MODE_FIFO_KHR;
+//        if(requestedMode == VK_PRESENT_MODE_FIFO_KHR)
+//            return VK_PRESENT_MODE_FIFO_KHR;
 
         for(int i = 0;i < availablePresentModes.capacity();i++) {
             if(availablePresentModes.get(i) == requestedMode) {
@@ -367,8 +369,7 @@ public class SwapChain extends Framebuffer {
         }
 
         Initializer.LOGGER.warn("Requested mode not supported: using fallback VK_PRESENT_MODE_FIFO_KHR");
-        return VK_PRESENT_MODE_FIFO_KHR;
-
+        return defUncappedMode;
     }
 
     private static VkExtent2D getExtent(VkSurfaceCapabilitiesKHR capabilities) {

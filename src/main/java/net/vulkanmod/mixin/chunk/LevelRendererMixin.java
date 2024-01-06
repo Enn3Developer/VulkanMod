@@ -10,7 +10,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
-import net.minecraft.client.renderer.chunk.SectionRenderDispatcher;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.core.BlockPos;
@@ -98,7 +97,7 @@ public abstract class LevelRendererMixin {
      * @reason
      */
     @Overwrite
-    private void compileSections(Camera camera) {
+    private void compileChunks(Camera camera) {
         this.worldRenderer.compileSections(camera);
     }
 
@@ -107,7 +106,7 @@ public abstract class LevelRendererMixin {
      * @reason
      */
     @Overwrite
-    public boolean isSectionCompiled(BlockPos blockPos) {
+    public boolean isChunkCompiled(BlockPos blockPos) {
         return this.worldRenderer.isSectionCompiled(blockPos);
     }
 
@@ -116,16 +115,8 @@ public abstract class LevelRendererMixin {
      * @reason
      */
     @Overwrite
-    private void renderSectionLayer(RenderType renderType, PoseStack poseStack, double camX, double camY, double camZ, Matrix4f projectionMatrix) {
+    private void renderChunkLayer(RenderType renderType, PoseStack poseStack, double camX, double camY, double camZ, Matrix4f projectionMatrix) {
         this.worldRenderer.renderSectionLayer(renderType, poseStack, camX, camY, camZ, projectionMatrix);
-    }
-
-    /**
-     * @author
-     * @reason
-     */
-    @Overwrite
-    public void onChunkLoaded(ChunkPos chunkPos) {
     }
 
     /**
@@ -169,7 +160,7 @@ public abstract class LevelRendererMixin {
      * @reason
      */
     @Overwrite
-    public String getSectionStatistics() {
+    public String getChunkStatistics() {
         return this.worldRenderer.getChunkStatistics();
     }
 
@@ -178,7 +169,7 @@ public abstract class LevelRendererMixin {
      * @reason
      */
     @Overwrite
-    public boolean hasRenderedAllSections() {
+    public boolean hasRenderedAllChunks() {
         return this.worldRenderer.needsUpdate();
     }
 
@@ -187,7 +178,7 @@ public abstract class LevelRendererMixin {
      * @reason
      */
     @Overwrite
-    public int countRenderedSections() {
+    public int countRenderedChunks() {
         return this.worldRenderer.getVisibleSectionsCount();
     }
 
