@@ -161,7 +161,12 @@ public class Options {
                             minecraftOptions.mipmapLevels().set(value);
                             Minecraft.getInstance().delayTextureReload();
                         },
-                        () -> minecraftOptions.mipmapLevels().get())
+                        () -> minecraftOptions.mipmapLevels().get()),
+                new RangeOption("Block Entity View Distance", 16, 64, 16,
+                        value -> config.blockEntityViewDistance = value,
+                        () -> config.blockEntityViewDistance)
+                        .setTooltip(Component.nullToEmpty(
+                                "Overrides the default view distance for block entities, works really well when there are a lot of block entities to render"))
         };
     }
 

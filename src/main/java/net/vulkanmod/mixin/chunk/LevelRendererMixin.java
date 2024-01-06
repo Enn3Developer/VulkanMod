@@ -217,21 +217,16 @@ public abstract class LevelRendererMixin {
     @Overwrite
     private void renderEntity(Entity entity, double d, double e, double f, float g, PoseStack poseStack, MultiBufferSource multiBufferSource) {
         if(!Initializer.CONFIG.entityCulling) {
-            double h = Mth.lerp((double)g, entity.xOld, entity.getX());
-            double i = Mth.lerp((double)g, entity.yOld, entity.getY());
-            double j = Mth.lerp((double)g, entity.zOld, entity.getZ());
+            double h = Mth.lerp(g, entity.xOld, entity.getX());
+            double i = Mth.lerp(g, entity.yOld, entity.getY());
+            double j = Mth.lerp(g, entity.zOld, entity.getZ());
             float k = Mth.lerp(g, entity.yRotO, entity.getYRot());
             this.entityRenderDispatcher.render(entity, h - d, i - e, j - f, k, g, poseStack, multiBufferSource, this.entityRenderDispatcher.getPackedLightCoords(entity, g));
             return;
         }
 
         var entityClass = entity.getClass();
-        var list = this.entitiesMap.get(entityClass);
-
-        if(list == null) {
-            list = new ObjectArrayList<>();
-            this.entitiesMap.put(entityClass, list);
-        }
+        var list = this.entitiesMap.computeIfAbsent(entityClass, k -> new ObjectArrayList<>());
 
         list.add(new Pair<>(entity, multiBufferSource));
 
