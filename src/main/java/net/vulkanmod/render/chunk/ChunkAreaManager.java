@@ -32,7 +32,7 @@ public class ChunkAreaManager {
         this.ySize = (relativeHeight & 0x5) == 0 ? (relativeHeight >> BASE_SH_Y) : (relativeHeight >> BASE_SH_Y) + 1;
 
         //check if width is even
-        if((t & 1) == 0)
+        if ((t & 1) == 0)
             t++;
         this.xzSize = t;
         //TODO make even size work
@@ -40,12 +40,12 @@ public class ChunkAreaManager {
         this.size = xzSize * ySize * xzSize;
         this.chunkAreasArr = new ChunkArea[size];
 
-        for(int j = 0; j < this.xzSize; ++j) {
-            for(int k = 0; k < this.ySize; ++k) {
-                for(int l = 0; l < this.xzSize; ++l) {
+        for (int j = 0; j < this.xzSize; ++j) {
+            for (int k = 0; k < this.ySize; ++k) {
+                for (int l = 0; l < this.xzSize; ++l) {
                     int i1 = this.getAreaIndex(j, k, l);
                     Vector3i vector3i = new Vector3i(j << BASE_SH_XZ + 4, k << BASE_SH_Y + 4, l << BASE_SH_XZ + 4);
-                    this.chunkAreasArr[i1] = new ChunkArea(i1, vector3i);
+                    this.chunkAreasArr[i1] = new ChunkArea(i1, vector3i, minHeight);
                 }
             }
         }
@@ -76,26 +76,26 @@ public class ChunkAreaManager {
         int xRangeEnd;
         int xComplStart;
         int xComplEnd;
-        if(deltaX >= 0) {
+        if (deltaX >= 0) {
             xRangeStart = this.xzSize - deltaX;
             xRangeEnd = this.xzSize - 1;
             xComplStart = 0;
             xComplEnd = xRangeStart - 1;
         } else {
             xRangeStart = 0;
-            xRangeEnd = - deltaX - 1;
+            xRangeEnd = -deltaX - 1;
             xComplStart = xRangeEnd;
             xComplEnd = this.xzSize - 1;
         }
 
         int zRangeStart;
         int zRangeEnd;
-        if(deltaZ >= 0) {
+        if (deltaZ >= 0) {
             zRangeStart = this.xzSize - deltaZ;
             zRangeEnd = this.xzSize - 1;
         } else {
             zRangeStart = 0;
-            zRangeEnd = - deltaZ - 1;
+            zRangeEnd = -deltaZ - 1;
         }
 
         CircularIntList.RangeIterator xRangeIterator = xList.rangeIterator(xRangeStart, xRangeEnd);
@@ -103,14 +103,14 @@ public class ChunkAreaManager {
         CircularIntList.RangeIterator zRangeIterator = zList.rangeIterator(zRangeStart, zRangeEnd);
 
         xAbsChunkIndex = xS - this.xzSize / 2 + xRangeStart;
-        for(int xRelativeIndex; xRangeIterator.hasNext(); xAbsChunkIndex++) {
+        for (int xRelativeIndex; xRangeIterator.hasNext(); xAbsChunkIndex++) {
             xRelativeIndex = xRangeIterator.next();
             int x1 = (xAbsChunkIndex << s);
 
             zIterator.restart();
             zAbsChunkIndex = zS - (this.xzSize >> 1);
 
-            for(int zRelativeIndex; zIterator.hasNext(); zAbsChunkIndex++) {
+            for (int zRelativeIndex; zIterator.hasNext(); zAbsChunkIndex++) {
                 zRelativeIndex = zIterator.next();
                 int z1 = (zAbsChunkIndex << s);
 
@@ -126,18 +126,18 @@ public class ChunkAreaManager {
         }
 
         xAbsChunkIndex = xS - this.xzSize / 2 + xComplStart;
-        for(int xRelativeIndex; xComplIterator.hasNext(); xAbsChunkIndex++) {
+        for (int xRelativeIndex; xComplIterator.hasNext(); xAbsChunkIndex++) {
             xRelativeIndex = xComplIterator.next();
             int x1 = (xAbsChunkIndex << s);
 
             zRangeIterator.restart();
             zAbsChunkIndex = zS - (this.xzSize >> 1) + zRangeStart;
 
-            for(int zRelativeIndex; zRangeIterator.hasNext(); zAbsChunkIndex++) {
+            for (int zRelativeIndex; zRangeIterator.hasNext(); zAbsChunkIndex++) {
                 zRelativeIndex = zRangeIterator.next();
                 int z1 = (zAbsChunkIndex << s);
 
-                for(int yRel = 0; yRel < this.ySize; ++yRel) {
+                for (int yRel = 0; yRel < this.ySize; ++yRel) {
                     int y1 = this.minHeight + (yRel << s);
                     ChunkArea chunkArea = this.chunkAreasArr[this.getAreaIndex(xRelativeIndex, yRel, zRelativeIndex)];
 
@@ -173,13 +173,13 @@ public class ChunkAreaManager {
 
     public void updateFrustumVisibility(VFrustum frustum) {
 
-        for(ChunkArea chunkArea : this.chunkAreasArr) {
+        for (ChunkArea chunkArea : this.chunkAreasArr) {
             chunkArea.updateFrustum(frustum);
         }
     }
 
     public void resetQueues() {
-        for(ChunkArea chunkArea : this.chunkAreasArr) {
+        for (ChunkArea chunkArea : this.chunkAreasArr) {
             chunkArea.sectionQueue.clear();
         }
     }
@@ -189,7 +189,7 @@ public class ChunkAreaManager {
     }
 
     public void releaseAllBuffers() {
-        for(ChunkArea chunkArea : this.chunkAreasArr) {
+        for (ChunkArea chunkArea : this.chunkAreasArr) {
             chunkArea.releaseBuffers();
         }
     }

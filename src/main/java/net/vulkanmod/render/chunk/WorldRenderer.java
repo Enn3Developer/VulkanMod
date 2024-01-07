@@ -18,7 +18,9 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.chunk.RenderRegionCache;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.core.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.BlockDestructionProgress;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -44,10 +46,10 @@ import net.vulkanmod.vulkan.memory.MemoryTypes;
 import net.vulkanmod.vulkan.shader.GraphicsPipeline;
 import org.joml.FrustumIntersection;
 import org.joml.Matrix4f;
+import org.lwjgl.vulkan.VkCommandBuffer;
 
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.stream.Stream;
 
 public class WorldRenderer {
     private static WorldRenderer INSTANCE;
@@ -321,10 +323,6 @@ public class WorldRenderer {
                 this.nonEmptyChunks++;
             }
 
-            if (!this.cameraPos.closerThan(new Vec3(renderSection.xOffset, renderSection.yOffset, renderSection.zOffset), this.lastViewDistance * 16)) {
-                continue;
-            }
-
             this.scheduleUpdate(renderSection);
 
             if (renderSection.directionChanges > maxDirectionsChanges)
@@ -555,23 +553,30 @@ public class WorldRenderer {
 
         VRenderSystem.applyMVP(poseStack.last().pose(), projection);
 
-        Renderer renderer = Renderer.getInstance();
-        GraphicsPipeline pipeline = PipelineManager.getTerrainShader(renderType);
-        renderer.bindGraphicsPipeline(pipeline);
-        Renderer.getDrawer().bindAutoIndexBuffer(Renderer.getCommandBuffer(), 7);
+
+        final VkCommandBuffer commandBuffer = Renderer.getCommandBuffer();
+
 
         p.push("draw batches");
 
-        int currentFrame = Renderer.getCurrentFrame();
+        final int currentFrame = Renderer.getCurrentFrame();
         if ((Initializer.CONFIG.uniqueOpaqueLayer ? TerrainRenderType.COMPACT_RENDER_TYPES : TerrainRenderType.SEMI_COMPACT_RENDER_TYPES).contains(renderType)) {
-            Iterator<ChunkArea> iterator = this.chunkAreaQueue.iterator(flag);
-            while (iterator.hasNext()) {
+            final TerrainRenderType terrainRenderType = TerrainRenderType.get(renderType);
+            GraphicsPipeline terrainShader = PipelineManager.getTerrainShader(terrainRenderType);
+            Renderer.getInstance().bindGraphicsPipeline(terrainShader);
+            Renderer.getDrawer().bindAutoIndexBuffer(commandBuffer, 7);
+
+            terrainShader.bindDescriptorSets(commandBuffer, currentFrame);
+
+            final long layout = terrainShader.getLayout();
+
+            for (Iterator<ChunkArea> iterator = this.chunkAreaQueue.iterator(flag); iterator.hasNext(); ) {
                 ChunkArea chunkArea = iterator.next();
 
                 if (indirectDraw) {
-                    chunkArea.getDrawBuffers().buildDrawBatchesIndirect(indirectBuffers[currentFrame], chunkArea, renderType, camX, camY, camZ);
+                    chunkArea.getDrawBuffers().buildDrawBatchesIndirect(indirectBuffers[currentFrame], chunkArea.sectionQueue, terrainRenderType, camX, camY, camZ, layout);
                 } else {
-                    chunkArea.getDrawBuffers().buildDrawBatchesDirect(chunkArea.sectionQueue, pipeline, renderType, camX, camY, camZ);
+                    chunkArea.getDrawBuffers().buildDrawBatchesDirect(chunkArea.sectionQueue, terrainRenderType, camX, camY, camZ, layout);
                 }
             }
         }
@@ -582,11 +587,6 @@ public class WorldRenderer {
         }
         p.pop();
 
-        //Need to reset push constant in case the pipeline will still be used for rendering
-        if (!indirectDraw) {
-            VRenderSystem.setChunkOffset(0, 0, 0);
-            renderer.pushConstants(pipeline);
-        }
 
         this.minecraft.getProfiler().pop();
         renderType.clearRenderState();
@@ -670,56 +670,29 @@ public class WorldRenderer {
 
         for (RenderSection renderSection : this.chunkQueue) {
             List<BlockEntity> list = renderSection.getCompiledSection().getRenderableBlockEntities();
-            list.parallelStream().filter(blockEntity -> {
-                try {
-                    return this.minecraft.getBlockEntityRenderDispatcher().getRenderer(blockEntity).shouldRender(blockEntity, this.cameraPos);
-                } catch (NullPointerException ignored) {
-                    return false;
-                }
-            }).sequential().forEach(blockEntity -> {
-                BlockPos blockPos = blockEntity.getBlockPos();
-                MultiBufferSource bufferSource1 = bufferSource;
-                poseStack.pushPose();
-                poseStack.translate((double) blockPos.getX() - camX, (double) blockPos.getY() - camY, (double) blockPos.getZ() - camZ);
-                SortedSet<BlockDestructionProgress> sortedset = destructionProgress.get(blockPos.asLong());
-                if (sortedset != null && !sortedset.isEmpty()) {
-                    int j1 = sortedset.last().getProgress();
-                    if (j1 >= 0) {
-                        PoseStack.Pose pose = poseStack.last();
-                        VertexConsumer vertexconsumer = new SheetedDecalTextureGenerator(this.renderBuffers.crumblingBufferSource().getBuffer(ModelBakery.DESTROY_TYPES.get(j1)), pose.pose(), pose.normal(), 1.0f);
-                        bufferSource1 = (renderType) -> {
-                            VertexConsumer vertexConsumer2 = bufferSource.getBuffer(renderType);
-                            return renderType.affectsCrumbling() ? VertexMultiConsumer.create(vertexconsumer, vertexConsumer2) : vertexConsumer2;
-                        };
+            if (!list.isEmpty()) {
+                for (BlockEntity blockEntity : list) {
+                    BlockPos blockPos = blockEntity.getBlockPos();
+                    MultiBufferSource bufferSource1 = bufferSource;
+                    poseStack.pushPose();
+                    poseStack.translate((double) blockPos.getX() - camX, (double) blockPos.getY() - camY, (double) blockPos.getZ() - camZ);
+                    SortedSet<BlockDestructionProgress> sortedset = destructionProgress.get(blockPos.asLong());
+                    if (sortedset != null && !sortedset.isEmpty()) {
+                        int j1 = sortedset.last().getProgress();
+                        if (j1 >= 0) {
+                            PoseStack.Pose pose = poseStack.last();
+                            VertexConsumer vertexconsumer = new SheetedDecalTextureGenerator(this.renderBuffers.crumblingBufferSource().getBuffer(ModelBakery.DESTROY_TYPES.get(j1)), pose.pose(), pose.normal(), 1.0f);
+                            bufferSource1 = (renderType) -> {
+                                VertexConsumer vertexConsumer2 = bufferSource.getBuffer(renderType);
+                                return renderType.affectsCrumbling() ? VertexMultiConsumer.create(vertexconsumer, vertexConsumer2) : vertexConsumer2;
+                            };
+                        }
                     }
-                }
 
-                this.minecraft.getBlockEntityRenderDispatcher().render(blockEntity, gameTime, poseStack, bufferSource1);
-                poseStack.popPose();
-            });
-//            if (!list.isEmpty()) {
-//                for (BlockEntity blockEntity : list) {
-//                    BlockPos blockPos = blockEntity.getBlockPos();
-//                    MultiBufferSource bufferSource1 = bufferSource;
-//                    poseStack.pushPose();
-//                    poseStack.translate((double) blockPos.getX() - camX, (double) blockPos.getY() - camY, (double) blockPos.getZ() - camZ);
-//                    SortedSet<BlockDestructionProgress> sortedset = destructionProgress.get(blockPos.asLong());
-//                    if (sortedset != null && !sortedset.isEmpty()) {
-//                        int j1 = sortedset.last().getProgress();
-//                        if (j1 >= 0) {
-//                            PoseStack.Pose pose = poseStack.last();
-//                            VertexConsumer vertexconsumer = new SheetedDecalTextureGenerator(this.renderBuffers.crumblingBufferSource().getBuffer(ModelBakery.DESTROY_TYPES.get(j1)), pose.pose(), pose.normal(), 1.0f);
-//                            bufferSource1 = (renderType) -> {
-//                                VertexConsumer vertexConsumer2 = bufferSource.getBuffer(renderType);
-//                                return renderType.affectsCrumbling() ? VertexMultiConsumer.create(vertexconsumer, vertexConsumer2) : vertexConsumer2;
-//                            };
-//                        }
-//                    }
-//
-//                    this.minecraft.getBlockEntityRenderDispatcher().render(blockEntity, gameTime, poseStack, bufferSource1);
-//                    poseStack.popPose();
-//                }
-//            }
+                    this.minecraft.getBlockEntityRenderDispatcher().render(blockEntity, gameTime, poseStack, bufferSource1);
+                    poseStack.popPose();
+                }
+            }
         }
     }
 

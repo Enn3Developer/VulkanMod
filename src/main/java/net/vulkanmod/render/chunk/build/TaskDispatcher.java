@@ -38,7 +38,7 @@ public class TaskDispatcher {
     }
 
     public void createThreads(int n) {
-        if(!this.stopThreads)
+        if (!this.stopThreads)
             return;
 
         this.stopThreads = false;
@@ -56,10 +56,10 @@ public class TaskDispatcher {
     }
 
     private void runTaskThread(ThreadBuilderPack builderPack) {
-        while(!this.stopThreads) {
+        while (!this.stopThreads) {
             ChunkTask task = this.pollTask();
 
-            if(task == null)
+            if (task == null)
                 synchronized (this) {
                     try {
                         this.idleThreads++;
@@ -70,7 +70,7 @@ public class TaskDispatcher {
                     this.idleThreads--;
                 }
 
-            if(task == null)
+            if (task == null)
                 continue;
 
             task.doTask(builderPack);
@@ -78,7 +78,7 @@ public class TaskDispatcher {
     }
 
     public void schedule(ChunkTask chunkTask) {
-        if(chunkTask == null)
+        if (chunkTask == null)
             return;
 
         if (chunkTask.highPriority) {
@@ -96,14 +96,14 @@ public class TaskDispatcher {
     private ChunkTask pollTask() {
         ChunkTask task = this.highPriorityTasks.poll();
 
-        if(task == null)
+        if (task == null)
             task = this.lowPriorityTasks.poll();
 
         return task;
     }
 
     public void stopThreads() {
-        if(this.stopThreads)
+        if (this.stopThreads)
             return;
 
         this.stopThreads = true;
@@ -126,7 +126,7 @@ public class TaskDispatcher {
 
         Runnable runnable;
         boolean flag = false;
-        while((runnable = this.toUpload.poll()) != null) {
+        while ((runnable = this.toUpload.poll()) != null) {
             flag = true;
             runnable.run();
         }
@@ -146,11 +146,11 @@ public class TaskDispatcher {
         ChunkArea renderArea = section.getChunkArea();
         DrawBuffers drawBuffers = renderArea.getDrawBuffers();
 
-        for(TerrainRenderType renderType : TerrainRenderType.VALUES) {
+        for (TerrainRenderType renderType : TerrainRenderType.VALUES) {
             UploadBuffer uploadBuffer = uploadBuffers.get(renderType);
 
-            if(uploadBuffer != null) {
-                drawBuffers.upload(uploadBuffer, section.getDrawParameters(renderType));
+            if (uploadBuffer != null) {
+                drawBuffers.upload(section.xOffset(), section.yOffset(), section.zOffset(), uploadBuffer, section.getDrawParameters(renderType));
             } else {
                 section.getDrawParameters(renderType).reset(renderArea);
             }
@@ -167,24 +167,26 @@ public class TaskDispatcher {
         ChunkArea renderArea = section.getChunkArea();
         DrawBuffers drawBuffers = renderArea.getDrawBuffers();
 
-        drawBuffers.upload(uploadBuffer, section.getDrawParameters(renderType));
+        drawBuffers.upload(section.xOffset(), section.yOffset(), section.zOffset(), uploadBuffer, section.getDrawParameters(renderType));
     }
 
     public int getIdleThreadsCount() {
         return this.idleThreads;
     }
 
-    public boolean isIdle() { return this.idleThreads == this.threads.length && this.toUpload.isEmpty(); }
+    public boolean isIdle() {
+        return this.idleThreads == this.threads.length && this.toUpload.isEmpty();
+    }
 
     public void clearBatchQueue() {
-        while(!this.highPriorityTasks.isEmpty()) {
+        while (!this.highPriorityTasks.isEmpty()) {
             ChunkTask chunkTask = this.highPriorityTasks.poll();
             if (chunkTask != null) {
                 chunkTask.cancel();
             }
         }
 
-        while(!this.lowPriorityTasks.isEmpty()) {
+        while (!this.lowPriorityTasks.isEmpty()) {
             ChunkTask chunkTask = this.lowPriorityTasks.poll();
             if (chunkTask != null) {
                 chunkTask.cancel();

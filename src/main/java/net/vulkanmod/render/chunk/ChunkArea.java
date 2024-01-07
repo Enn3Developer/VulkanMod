@@ -1,7 +1,6 @@
 package net.vulkanmod.render.chunk;
 
 import net.minecraft.core.BlockPos;
-import net.vulkanmod.render.chunk.util.ResettableQueue;
 import net.vulkanmod.render.chunk.util.StaticQueue;
 import org.joml.FrustumIntersection;
 import org.joml.Vector3i;
@@ -19,26 +18,26 @@ public class ChunkArea {
     //Help JIT optimisations by hardcoding the queue size to the max possible ChunkArea limit
     final StaticQueue<RenderSection> sectionQueue = new StaticQueue<>(512);
 
-    public ChunkArea(int i, Vector3i origin) {
+    public ChunkArea(int i, Vector3i origin, int minHeight) {
         this.index = i;
         this.position = origin;
-        this.drawBuffers = new DrawBuffers();
+        this.drawBuffers = new DrawBuffers(i, origin, minHeight);
     }
 
     public void updateFrustum(VFrustum frustum) {
         //TODO: maybe move to an aux class
         int frustumResult = frustum.cubeInFrustum(this.position.x(), this.position.y(), this.position.z(),
-                this.position.x() + (8 << 4) , this.position.y() + (8 << 4), this.position.z() + (8 << 4));
+                this.position.x() + (8 << 4), this.position.y() + (8 << 4), this.position.z() + (8 << 4));
 
         //Inner cubes
         if (frustumResult == FrustumIntersection.INTERSECT) {
             int width = 8 << 4;
             int l = width >> 1;
 
-            for(int x1 = 0; x1 < 2; x1++) {
+            for (int x1 = 0; x1 < 2; x1++) {
                 float xMin = this.position.x() + (x1 * l);
                 float xMax = xMin + l;
-                for(int y1 = 0; y1 < 2; y1++) {
+                for (int y1 = 0; y1 < 2; y1++) {
                     float yMin = this.position.y() + (y1 * l);
                     float yMax = yMin + l;
                     for (int z1 = 0; z1 < 2; z1++) {
@@ -46,7 +45,7 @@ public class ChunkArea {
                         float zMax = zMin + l;
 
                         frustumResult = frustum.cubeInFrustum(xMin, yMin, zMin,
-                                xMax , yMax, zMax);
+                                xMax, yMax, zMax);
 
                         int beginIdx = (x1 << 5) + (y1 << 4) + (z1 << 3);
                         if (frustumResult == FrustumIntersection.INTERSECT) {
@@ -71,11 +70,10 @@ public class ChunkArea {
 
                                 }
                             }
-                        }
-                        else {
+                        } else {
                             int end = beginIdx + 8;
 
-                            for(int i = beginIdx; i < end; ++i) {
+                            for (int i = beginIdx; i < end; ++i) {
                                 this.inFrustum[i] = (byte) frustumResult;
                             }
                         }
@@ -114,15 +112,15 @@ public class ChunkArea {
     }
 
     public DrawBuffers getDrawBuffers() {
-        if(!this.drawBuffers.isAllocated())
+        if (!this.drawBuffers.isAllocated())
             drawBuffers.allocateBuffers();
 
         return this.drawBuffers;
     }
 
-    private void allocateDrawBuffers() {
-        this.drawBuffers = new DrawBuffers();
-    }
+//    private void allocateDrawBuffers() {
+//        this.drawBuffers = new DrawBuffers(this.index, this.position);
+//    }
 
     public void addSection(RenderSection section) {
         this.sectionQueue.add(section);
