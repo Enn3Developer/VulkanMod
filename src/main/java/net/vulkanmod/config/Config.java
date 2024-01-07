@@ -21,6 +21,8 @@ public class Config {
     public boolean uniqueOpaqueLayer = true;
     public boolean entityCulling = true;
     public int device = -1;
+    public boolean animations = true;
+    public boolean renderSky = true;
     public int blockEntityViewDistance = 64;
 
     private static Path path;
@@ -37,12 +39,10 @@ public class Config {
         if (Files.exists(path)) {
             try (FileReader fileReader = new FileReader(path.toFile())) {
                 config = GSON.fromJson(fileReader, Config.class);
-            }
-            catch (IOException exception) {
+            } catch (IOException exception) {
                 throw new RuntimeException(exception.getMessage());
             }
-        }
-        else {
+        } else {
             config = null;
         }
 
@@ -51,7 +51,7 @@ public class Config {
 
     public void write() {
 
-        if(!Files.exists(path.getParent())) {
+        if (!Files.exists(path.getParent())) {
             try {
                 Files.createDirectories(path);
             } catch (IOException e) {

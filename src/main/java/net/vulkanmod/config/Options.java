@@ -16,7 +16,7 @@ public class Options {
     public static boolean fullscreenDirty = false;
 
     public static Option<?>[] getVideoOpts() {
-        return new Option[] {
+        return new Option[]{
                 new CyclingOption<>("Resolution",
                         VideoResolution.getVideoResolutions(),
                         resolution -> Component.literal(resolution.toString()),
@@ -63,10 +63,10 @@ public class Options {
                         () -> minecraftOptions.guiScale().get()),
                 new RangeOption("Brightness", 0, 100, 1,
                         value -> {
-                          if(value == 0) return Component.translatable("options.gamma.min").getString();
-                          else if(value == 50) return Component.translatable("options.gamma.default").getString();
-                          else if(value == 100) return Component.translatable("options.gamma.max").getString();
-                          return value.toString();
+                            if (value == 0) return Component.translatable("options.gamma.min").getString();
+                            else if (value == 50) return Component.translatable("options.gamma.default").getString();
+                            else if (value == 100) return Component.translatable("options.gamma.max").getString();
+                            return value.toString();
                         },
                         value -> minecraftOptions.gamma().set(value * 0.01),
                         () -> (int) (minecraftOptions.gamma().get() * 100.0)),
@@ -86,17 +86,17 @@ public class Options {
                         () -> minecraftOptions.showAutosaveIndicator().get()),
                 new RangeOption("Distortion Effects", 0, 100, 1,
                         value -> minecraftOptions.screenEffectScale().set(value * 0.01),
-                        () -> (int)(minecraftOptions.screenEffectScale().get() * 100.0f))
+                        () -> (int) (minecraftOptions.screenEffectScale().get() * 100.0f))
                         .setTooltip(Component.translatable("options.screenEffectScale.tooltip")),
                 new RangeOption("FOV Effects", 0, 100, 1,
                         value -> minecraftOptions.fovEffectScale().set(value * 0.01),
-                        () -> (int)(minecraftOptions.fovEffectScale().get() * 100.0f))
+                        () -> (int) (minecraftOptions.fovEffectScale().get() * 100.0f))
                         .setTooltip(Component.translatable("options.fovEffectScale.tooltip"))
         };
     }
 
     public static Option<?>[] getGraphicsOpts() {
-        return new Option[] {
+        return new Option[]{
                 new CyclingOption<>("Graphics",
                         new GraphicsStatus[]{GraphicsStatus.FAST, GraphicsStatus.FANCY},
                         graphicsMode -> Component.translatable(graphicsMode.getKey()),
@@ -124,8 +124,8 @@ public class Options {
                         It changes distant grass aspect and may cause unexpected texture behaviour""")),
                 new RangeOption("Biome Blend Radius", 0, 7, 1,
                         value -> {
-                    int v = value * 2 + 1;
-                    return v + " x " + v;
+                            int v = value * 2 + 1;
+                            return v + " x " + v;
                         },
                         (value) -> {
                             minecraftOptions.biomeBlendRadius().set(value);
@@ -154,6 +154,12 @@ public class Options {
                 new RangeOption("Entity Distance", 50, 500, 25,
                         value -> minecraftOptions.entityDistanceScaling().set(value * 0.01),
                         () -> minecraftOptions.entityDistanceScaling().get().intValue() * 100),
+                new SwitchOption("Animations",
+                        value -> config.animations = value,
+                        () -> config.animations),
+                new SwitchOption("Render Sky",
+                        value -> config.renderSky = value,
+                        () -> config.renderSky),
                 new CyclingOption<>("Mipmap Levels",
                         new Integer[]{0, 1, 2, 3, 4},
                         value -> Component.nullToEmpty(value.toString()),
@@ -166,12 +172,12 @@ public class Options {
                         value -> config.blockEntityViewDistance = value,
                         () -> config.blockEntityViewDistance)
                         .setTooltip(Component.nullToEmpty(
-                                "Overrides the default view distance for block entities, works really well when there are a lot of block entities to render"))
+                        "Overrides the default view distance for block entities, works really well when there are a lot of block entities to render"))
         };
     }
 
     public static Option<?>[] getOtherOpts() {
-        return new Option[] {
+        return new Option[]{
                 new RangeOption("Render queue size", 2,
                         5, 1,
                         value -> {
@@ -222,7 +228,7 @@ public class Options {
                         value -> {
                             String t;
 
-                            if(value == -1)
+                            if (value == -1)
                                 t = "Auto";
                             else
                                 t = DeviceManager.suitableDevices.get(value).deviceName;
@@ -232,14 +238,14 @@ public class Options {
                         value -> config.device = value,
                         () -> config.device)
                         .setTooltip(Component.nullToEmpty(
-                                String.format("Current device: %s", DeviceManager.deviceInfo.deviceName)))
+                        String.format("Current device: %s", DeviceManager.deviceInfo.deviceName)))
         };
 
     }
 
     public static void applyOptions(Config config, Option<?>[][] optionPages) {
-        for(Option<?>[] options : optionPages) {
-            for(Option<?> option : options) {
+        for (Option<?>[] options : optionPages) {
+            for (Option<?> option : options) {
                 option.apply();
             }
         }

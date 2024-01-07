@@ -5,6 +5,7 @@ import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.renderer.texture.Tickable;
 import net.minecraft.resources.ResourceLocation;
+import net.vulkanmod.Initializer;
 import net.vulkanmod.render.texture.SpriteUtil;
 import net.vulkanmod.vulkan.DeviceManager;
 import net.vulkanmod.vulkan.Renderer;
@@ -19,26 +20,29 @@ import java.util.Set;
 public abstract class MTextureManager {
 
 
-    @Shadow @Final private Set<Tickable> tickableTextures;
+    @Shadow
+    @Final
+    private Set<Tickable> tickableTextures;
 
 
-    @Shadow public abstract AbstractTexture getTexture(ResourceLocation resourceLocation, AbstractTexture abstractTexture);
+    @Shadow
+    public abstract AbstractTexture getTexture(ResourceLocation resourceLocation, AbstractTexture abstractTexture);
 
     /**
      * @author
      */
     @Overwrite
     public void tick() {
-        if(Renderer.skipRendering)
+        if (Renderer.skipRendering || !Initializer.CONFIG.animations)
             return;
 
         //Debug D
-        if(SpriteUtil.shouldUpload())
+        if (SpriteUtil.shouldUpload())
             DeviceManager.getGraphicsQueue().startRecording();
         for (Tickable tickable : this.tickableTextures) {
             tickable.tick();
         }
-        if(SpriteUtil.shouldUpload()) {
+        if (SpriteUtil.shouldUpload()) {
             SpriteUtil.transitionLayouts(DeviceManager.getGraphicsQueue().getCommandBuffer().getHandle());
             DeviceManager.getGraphicsQueue().endRecordingAndSubmit();
 //            Synchronization.INSTANCE.waitFences();
