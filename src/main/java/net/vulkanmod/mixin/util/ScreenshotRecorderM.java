@@ -27,7 +27,7 @@ public class ScreenshotRecorderM {
 //        Renderer renderer = Renderer.getInstance();
 //        boolean b = renderer.getBoundRenderPass() == renderPass;
 
-        nativeimage.downloadTexture(0, true);
+        nativeimage.downloadTexture(0, false);
 
         //nativeimage.flipY();
         return nativeimage;
