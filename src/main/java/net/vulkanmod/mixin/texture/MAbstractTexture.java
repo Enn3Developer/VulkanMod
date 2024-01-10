@@ -13,11 +13,15 @@ import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(AbstractTexture.class)
 public abstract class MAbstractTexture implements VAbstractTextureI {
-    @Shadow protected boolean blur;
-    @Shadow protected boolean mipmap;
-    @Shadow protected int id;
+    @Shadow
+    protected boolean blur;
+    @Shadow
+    protected boolean mipmap;
+    @Shadow
+    protected int id;
 
-    @Shadow public abstract int getId();
+    @Shadow
+    public abstract int getId();
 
     protected VulkanImage vulkanImage;
 
@@ -38,7 +42,7 @@ public abstract class MAbstractTexture implements VAbstractTextureI {
      */
     @Overwrite
     public void releaseId() {
-        if(this.vulkanImage != null) {
+        if (this.vulkanImage != null) {
             this.vulkanImage.free();
             this.vulkanImage = null;
         }
@@ -57,7 +61,7 @@ public abstract class MAbstractTexture implements VAbstractTextureI {
      */
     @Overwrite
     public void setFilter(boolean blur, boolean mipmap) {
-        if(blur != this.blur || mipmap != this.mipmap) {
+        if ((blur != this.blur || mipmap != this.mipmap) && vulkanImage != null) {
             this.blur = blur;
             this.mipmap = mipmap;
 
@@ -74,7 +78,7 @@ public abstract class MAbstractTexture implements VAbstractTextureI {
     }
 
     public VulkanImage getVulkanImage() {
-        if(vulkanImage != null)
+        if (vulkanImage != null)
             return vulkanImage;
         else {
             return GlTexture.getTexture(this.id).getVulkanImage();
@@ -84,7 +88,7 @@ public abstract class MAbstractTexture implements VAbstractTextureI {
     public void setVulkanImage(VulkanImage image) {
         this.vulkanImage = image;
 
-        if(this.id == -1)
+        if (this.id == -1)
             this.getId();
         GlTexture.setVulkanImage(this.id, this.vulkanImage);
     }
